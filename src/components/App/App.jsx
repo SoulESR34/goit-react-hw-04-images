@@ -4,7 +4,7 @@ import { MainContainer } from './App.styled';
 import { ImageGallery } from '../ImageGallery/ImageGallery';
 import { Photos } from 'services/Photos.service';
 import { Error } from '../Error/Error';
-import Loader from 'components/Loader/Loader';
+import Loader from '../Loader/Loader';
 import { Modal } from '../Modal/Modal';
 import { ButtonLoadMore } from '../ButtonLoadMore/ButtonLoadMore';
 
@@ -17,14 +17,6 @@ export const App = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalPhoto, setModalPhoto] = useState('');
 
-  const savePhotos = (photos) => {
-    if (pageNum > 1) {
-      console.log(photos)
-      setSearchedPhotos([...searchedPhotos, ...photos]);
-    } else{
-      setSearchedPhotos([...photos]);
-    }
-  };
 
   // Request content
   // (Search = query in string, Page = Pagination of load)
@@ -53,9 +45,16 @@ export const App = () => {
   }, [modalOpen]);
 
   useEffect(()=>{
-    async function requestPhotos(search = '', page = 1)  {
+    const savePhotos = (photos) => {
+      if (pageNum === 1) {
+        setSearchedPhotos([...photos]);
+      } else {
+        setSearchedPhotos((sp) => [...sp, ...photos]);
+      }
+    };
+
+    const requestPhotos = async(search, page = 1) => {
       setLoading(true);
-      setSaveSearch(search);
       setPageNum(page);
       try {
         // request
@@ -70,12 +69,17 @@ export const App = () => {
       }
     };
 
-    requestPhotos(saveSearch, pageNum);
+    requestPhotos(saveSearch, pageNum, setSearchedPhotos);
   }, [saveSearch, pageNum])
+
+  const searchElements = (search) => {
+    setSaveSearch(search)
+    setPageNum(1)
+  }
 
   return (
     <>
-      <SearchBar searchEngine={requestPhotos}></SearchBar>
+      <SearchBar searchEngine={searchElements}></SearchBar>
       <main>
         <MainContainer className="container">
           {loading && <Loader></Loader>}
