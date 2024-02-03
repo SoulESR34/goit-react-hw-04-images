@@ -16,38 +16,22 @@ export const App = () => {
   const [error, setError] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalPhoto, setModalPhoto] = useState('');
-  const [counter, setCounter] = useState(1);
 
-  const savePhotos = (photos, typeSave) => {
-    if (typeSave === 'update') {
+  const savePhotos = (photos) => {
+    if (pageNum > 1) {
+      console.log(photos)
       setSearchedPhotos([...searchedPhotos, ...photos]);
-    } else if (typeSave === 'get') {
+    } else{
       setSearchedPhotos([...photos]);
     }
   };
 
   // Request content
   // (Search = query in string, Page = Pagination of load)
-  const requestPhotos = async (search = '', page = 1, typeRequest = 'get') => {
-    setLoading(true);
-    setSaveSearch(search);
-    setPageNum(page);
-    try {
-      // request
-      const gallery = await Photos(search, page);
-      savePhotos(gallery.hits, typeRequest);
-    } catch (error) {
-      setError(true);
-      console.log('Download error someone parameter is incorrect', error);
-    } finally {
-      // ends loading animation
-      setLoading(false);
-    }
-  };
 
   // Request when the user click in the 'LoadMore' button
   const loadMore = () => {
-    requestPhotos(saveSearch, pageNum + 1, 'update');
+    setPageNum(pageNum + 1)
   };
 
   const enlargePhoto = largePhoto => {
@@ -55,21 +39,39 @@ export const App = () => {
     setModalPhoto(largePhoto);
   };
 
-  const closeModal = e => {
-    if (modalOpen && e.key === 'Escape') return setModalOpen(false);
-  };
-
   const identifyPhoto = e => {
     enlargePhoto(e.target.getAttribute('data-largeImage'));
   };
 
   useEffect(() => {
-    setCounter(counter + 1);
-    requestPhotos();
-
+    const closeModal = e => {
+      if (modalOpen && e.key === 'Escape') setModalOpen(false);
+    };
     document.addEventListener('keydown', e => closeModal(e));
-  }, []);
 
+    return document.removeEventListener('keydown', e => closeModal(e));
+  }, [modalOpen]);
+
+  useEffect(()=>{
+    async function requestPhotos(search = '', page = 1)  {
+      setLoading(true);
+      setSaveSearch(search);
+      setPageNum(page);
+      try {
+        // request
+        const gallery = await Photos(search, page);
+        savePhotos(gallery.hits);
+      } catch (error) {
+        setError(true);
+        console.log('Download error someone parameter is incorrect', error);
+      } finally {
+        // ends loading animation
+        setLoading(false);
+      }
+    };
+
+    requestPhotos(saveSearch, pageNum);
+  }, [saveSearch, pageNum])
 
   return (
     <>
